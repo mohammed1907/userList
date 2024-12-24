@@ -13,6 +13,8 @@ protocol UserListViewModelProtocol: ObservableObject {
     var isLoading: Bool { get }
     var errorMessage: String? { get }
     func fetchUsers()
+    func toggleLike(user: UserListModelElement)
+    func isUserLiked(user: UserListModelElement) -> Bool
 }
 
 class UserListViewModel: UserListViewModelProtocol {
@@ -27,7 +29,25 @@ class UserListViewModel: UserListViewModelProtocol {
     init(userListService: UserListService = UserListServiceImplement()) {
         self.userListService = userListService
     }
-   //MARK: Network call
+    
+    //MARK: Functions
+    func toggleLike(user: UserListModelElement) {
+        guard let userId = user.id else { return }
+        if UserDefaultsService.shared.isUserLiked(id: userId) {
+            UserDefaultsService.shared.removeLikedUser(id: userId)
+        } else {
+            UserDefaultsService.shared.saveLikedUser(id: userId)
+        }
+        objectWillChange.send() // Update the UI when the liked state changes.
+    }
+    
+    func isUserLiked(user: UserListModelElement) -> Bool {
+        guard let userId = user.id else { return false }
+        return UserDefaultsService.shared.isUserLiked(id: userId)
+    }
+}
+//MARK: Network call
+extension UserListViewModel {
     func fetchUsers() {
         isLoading = true
         errorMessage = nil
